@@ -1,82 +1,56 @@
-# __TITLE__
+# 日程調整 候補日ジェネレーター
 
-公開 URL: **https://yorozu-craft.com/__REPO__/**
+公開 URL: **https://yorozu-craft.com/nittei-kouho/**
 
-__DESCRIPTION__
+期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。
 yorozu-craft のツールの1つです（共通ルールは [youheioonuki.github.io の README](https://github.com/YouheiOonuki/youheioonuki.github.io) を参照）。
-
-<!-- TEMPLATE-BEGIN -->
-## テンプレートの使い方（`tools/init.mjs` を実行すると、この節は消えます）
-
-yorozu-craft の新しいツールの雛形です。サイト共通の決まり（youheioonuki.github.io の README「ツールを追加するとき」）のうち、ファイルで守れるものは最初から入れてあります。
-
-1. GitHub で「Use this template」→ リポジトリ名は短いローマ字＋種類（例: `loan-sim`）。URL になる
-2. クローンして、初期化スクリプトを 1 回だけ実行する（Node 20 以上）
-
-   ```sh
-   node tools/init.mjs loan-sim "住宅ローン 返済シミュレーター" "毎月の返済額と総返済額をすぐ計算。" --pwa
-   ```
-
-   - `__REPO__`・`__TITLE__`・`__DESCRIPTION__`・日付を置き換える
-   - `--pwa` を付けないと、オフライン対応の部分（`sw.js`・`manifest.webmanifest`・`PWA-BEGIN`〜`PWA-END`）を消す
-   - README のこの節と `tools/init.mjs` 自身を消す
-3. `node --test tests/*.test.js` が通ることを確かめてからコミット
-4. 残りは youheioonuki.github.io の README「ツールを追加するとき」の手順どおり（Pages の公開と Enforce HTTPS、トップの一覧・robots.txt・URL 表への追加など）
-
-最初から入っているもの:
-
-| 決まり | 入っている場所 |
-|-------|---------------|
-| canonical・OGP・AdSense・Cloudflare ビーコン | `index.html`・`guide.html` の `<head>` と `</body>` 直前 |
-| 共通ページへの相対リンク（`../about.html`・`../privacy-policy.html`） | 各ページのフッター |
-| ツール配下の 404 | `404.html`（youheioonuki.github.io のものと同じ） |
-| 保存キーの接頭辞 `<リポジトリ名>_`・try/catch | `main.js` の `store` |
-| 共有 URL は `#s=` | `main.js` の `toShareHash` / `fromShareHash` |
-| SW のキャッシュ名の接頭辞・自分のパスだけ扱う・`./sw.js` で登録 | `sw.js`・`main.js` |
-| manifest の `id` は `/<リポジトリ名>/` | `manifest.webmanifest` |
-| 使い方ページは `guide.html`（注意・データの扱い・根拠と確認日・更新履歴の節つき） | `guide.html` |
-| 要望・不具合の報告フォーム（全ツール共通の Google フォーム。リポジトリ名が入った状態で開く） | `guide.html` の「ご利用上の注意・データの扱い」 |
-| 時点のある値は値・出典・確認日をセットで 1 か所に | `constants.js`（テストで出典と確認日の書き忘れを検出） |
-| 計算は画面から切り離した純粋関数＋テスト | `calc.js`・`tests/`・`.github/workflows/test.yml` |
-| 端末のフォント・ダークモード | `style.css` |
-| MIT ライセンス | `LICENSE` |
-
-差し替えが必要なもの: `favicon.svg`・`apple-touch-icon.png`（180×180）・`og-image.png`（1200×630）は仮の絵なので、ツールに合わせて作り直す。
-<!-- TEMPLATE-END -->
 
 ## 機能
 
-- （できることを箇条書きで）
-- 入力内容はこの端末のブラウザにだけ保存し、外部には送信しない
+- 期間・使う曜日・時間帯（昼／夜／時刻指定）・候補の数を入れると、祝日・振替休日を外した候補日を自動で選ぶ
+- 選び方は「ばらけさせる」（期間全体に散らし、同じ週・同じ曜日に固めない）と「早い順」
+- カレンダーで NG の日を指定（範囲でまとめて指定も可）、候補を手で足す・外す
+- 2 段階調整：1 段目の回答で残った日にチェックを付けると、その日だけで 2 段目の文面を作る
+- 文面：メール・チャット（あいさつ＋候補＋期限＋断りやすい一文）、Forms の選択肢（1 行 1 候補）、LINE（短い版・絵文字なし）。日付の書き方は 10/7（水）か 10月7日（水）
+- 「すべてコピー」（Clipboard API。使えないときは文面を選択状態にする）
+- `.ics` で候補日をカレンダーに仮押さえ（時間帯ありは日本時間、終わりの指定が無ければ 2 時間。無しは終日）
+- 条件は `#s=` の共有リンクにできる（サーバーには送信されない）。入力中の条件はブラウザに自動保存（`nittei-kouho_draft`）
 
-## 計算の仕様・根拠
+## 候補の選び方の仕様
 
-（計算式、使っている値と出典。値は `constants.js` にまとめ、画面の「根拠と確認日」にも出す）
+- 条件に合う日＝期間内 × 使う曜日 × 祝日でない（「祝日を外す」がオンのとき）× NG でない
+- 「ばらけさせる」：週（月曜はじまり）ごとに分け、候補の数を週に均等に配る（余りは期間全体に等間隔に配る。空きの無い週の分は、いちばん少ない週へ回す）。週の中では等間隔に選び、週ごとに開始位置をずらして曜日が偏らないようにする。同じ週の候補は「切り上げ（候補の数 ÷ 週の数）」日まで
+- 手で足した日・外した日は、自動の候補に重ねて反映する（「自動で選び直す」で消える）
+- 祝日データの対応範囲の外の年を含む期間では、「祝日データなし」と警告する
+- 企画書（受け入れテストを含む）は yorozu-plans（非公開）の `docs/04_日程候補.md`。受け入れテストは `tests/calc.test.js`
 
-## 保守
+## 祝日データと保守
+
+- `constants.js` の `HOLIDAYS` は、内閣府「国民の祝日」の CSV（`https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv`）から対応する年の分を写したもの。2026-09-23 に CSV と 54 日（2025〜2027 年）が完全に一致することを確認
+- CSV はシフト JIS。突き合わせは `iconv -f SHIFT_JIS -t UTF-8` で変換してから行う
 
 | 時期 | 確認すること | 直す場所 |
 |------|------------|---------|
-| （例: 毎年4月ごろ） | （例: 料率の改定） | `constants.js`、`guide.html` の最終確認日 |
+| 毎年 2 月ごろ（内閣府が翌年の祝日を公表したあと） | 翌年の祝日を CSV から足し、既存の年と差が無いかを突き合わせる | `constants.js` の `HOLIDAYS`・`HOLIDAY_YEARS.to`・`CHECKED`、`guide.html` の更新履歴 |
+| 祝日法が改正されたとき | 変更された年の祝日 | 同上 |
 
-値や計算を直したら、`guide.html` の「更新履歴」に日付と内容を 1 行足す。
+値を直したら、`guide.html` の「更新履歴」に日付と内容を 1 行足す。
 
 ## ファイル
 
 | ファイル | 役割 |
 |---------|------|
-| `index.html` | ツール本体 |
-| `guide.html` | 使い方・根拠と確認日・よくある質問・ご利用上の注意・更新履歴 |
-| `calc.js` | 計算ロジック（画面から切り離した純粋関数） |
-| `constants.js` | 時点のある値（値・出典・確認日） |
-| `main.js` | 画面の制御・保存・共有リンク |
+| `index.html` | 候補日ジェネレーター本体 |
+| `guide.html` | 使い方・候補日は何日がよいか・2 段階調整・依頼文の書き方・祝日データと確認日・よくある質問・ご利用上の注意・更新履歴 |
+| `calc.js` | 候補の選び方・文面・.ics（画面から切り離した純粋関数） |
+| `constants.js` | 祝日データ（出典・確認日・対応年） |
+| `main.js` | 画面の制御・カレンダー・保存・共有リンク・コピー |
 | `style.css` | 見た目（和紙風の配色、ダークモード対応） |
-| `sw.js` / `manifest.webmanifest` | オフライン対応（使う場合のみ） |
 | `404.html` | ツール配下の存在しない URL で出るページ（サイト共通のもの） |
 | `favicon.svg` / `apple-touch-icon.png` / `og-image.png` | アイコン / ホーム画面用アイコン / SNS 共有用画像（1200×630） |
 | `sitemap.xml` | サイトマップ（robots.txt はドメイン直下で管理） |
-| `tests/*.test.js` | テスト（`node --test tests/*.test.js`。`.github/workflows/test.yml` で push・PR のたびに自動実行） |
+| `tests/calc.test.js` | 計算のテスト（`node --test tests/*.test.js`。`.github/workflows/test.yml` で push・PR のたびに自動実行） |
 
 ## ライセンス
 
-MIT License（`LICENSE`）。
+MIT License（`LICENSE`）。祝日データは内閣府の公表資料をもとにしています。

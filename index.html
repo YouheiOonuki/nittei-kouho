@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>__TITLE__｜yorozu-craft</title>
-  <meta name="description" content="__DESCRIPTION__">
+  <title>日程調整 候補日ジェネレーター｜yorozu-craft</title>
+  <meta name="description" content="期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://yorozu-craft.com/__REPO__/">
+  <link rel="canonical" href="https://yorozu-craft.com/nittei-kouho/">
 
-  <meta property="og:title" content="__TITLE__｜yorozu-craft">
-  <meta property="og:description" content="__DESCRIPTION__">
+  <meta property="og:title" content="日程調整 候補日ジェネレーター｜yorozu-craft">
+  <meta property="og:description" content="期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://yorozu-craft.com/__REPO__/">
+  <meta property="og:url" content="https://yorozu-craft.com/nittei-kouho/">
   <meta property="og:site_name" content="yorozu-craft">
   <meta property="og:locale" content="ja_JP">
-  <meta property="og:image" content="https://yorozu-craft.com/__REPO__/og-image.png">
+  <meta property="og:image" content="https://yorozu-craft.com/nittei-kouho/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -25,9 +25,9 @@
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "__TITLE__",
-    "description": "__DESCRIPTION__",
-    "url": "https://yorozu-craft.com/__REPO__/",
+    "name": "日程調整 候補日ジェネレーター",
+    "description": "期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。",
+    "url": "https://yorozu-craft.com/nittei-kouho/",
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "All",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
@@ -42,33 +42,150 @@
 
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-  <!-- PWA-BEGIN -->
-  <link rel="manifest" href="./manifest.webmanifest">
-  <!-- PWA-END -->
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 
   <header class="app-header">
-    <h1>__TITLE__</h1>
-    <p class="subtitle">__DESCRIPTION__</p>
+    <h1>日程調整 候補日ジェネレーター</h1>
+    <p class="subtitle">期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。</p>
   </header>
 
   <main class="app-main">
 
-    <!-- ここにツール本体を書く（例: 金額を 100 円単位で切り上げる） -->
-    <section class="card" aria-labelledby="tool-heading">
-      <h2 id="tool-heading">計算</h2>
+    <p class="badge" id="asof">祝日は内閣府の一覧（<span id="hol-years"></span>）で外します・入力は外部に送信しません</p>
+
+    <!-- 1. 条件 -->
+    <section class="card" aria-labelledby="h-cond">
+      <h2 id="h-cond">条件</h2>
       <div class="field">
-        <label for="amount">金額</label>
-        <p class="hint">入力内容はこの端末のブラウザにだけ保存され、外部には送信されません。</p>
-        <input type="number" id="amount" inputmode="numeric" placeholder="例：1234">
+        <label for="title">用件（文面に入ります）</label>
+        <input type="text" id="title" maxlength="40" placeholder="例：懇親会、定例ミーティング">
       </div>
-      <p>結果：<strong id="result" aria-live="polite">—</strong></p>
-      <button type="button" id="share" class="btn">結果を開くリンクをコピー</button>
+      <div class="grid2">
+        <div class="field">
+          <label for="start">期間の始まり</label>
+          <input type="date" id="start">
+        </div>
+        <div class="field">
+          <label for="end">期間の終わり</label>
+          <input type="date" id="end">
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend>使う曜日</legend>
+        <div class="dow-row" id="weekdays"></div>
+      </fieldset>
+      <label class="inline field"><input type="checkbox" id="skip-hol"> 祝日・振替休日を外す</label>
+      <div class="grid2">
+        <div class="field">
+          <label for="time-kind">時間帯</label>
+          <select id="time-kind">
+            <option value="none">書かない（日付だけ）</option>
+            <option value="lunch">昼（12:00〜）</option>
+            <option value="night">夜（19:00〜）</option>
+            <option value="custom">時刻を指定</option>
+          </select>
+          <div class="with-unit" id="time-custom" hidden>
+            <input type="time" id="time-from" aria-label="開始時刻"> 〜 <input type="time" id="time-to" aria-label="終了時刻（任意）">
+          </div>
+        </div>
+        <div class="field">
+          <label for="count">候補の数</label>
+          <p class="hint">5〜8 日くらいが答えやすい数です</p>
+          <input type="number" id="count" inputmode="numeric" min="1" max="31" step="1">
+        </div>
+      </div>
+      <fieldset class="field">
+        <legend>選び方</legend>
+        <label class="inline"><input type="radio" name="mode" value="spread"> ばらけさせる（同じ週に固めない）</label>
+        <label class="inline"><input type="radio" name="mode" value="early"> 早い順</label>
+      </fieldset>
     </section>
 
-    <p class="small"><a href="./guide.html">使い方・よくある質問・ご利用上の注意</a></p>
+    <!-- 2. カレンダー -->
+    <section class="card" aria-labelledby="h-cal">
+      <h2 id="h-cal">カレンダーで調整</h2>
+      <div id="warnings" class="msg msg-warn" hidden></div>
+      <fieldset class="field">
+        <legend>日付を押したときの動き</legend>
+        <label class="inline"><input type="radio" name="tap" value="ng" checked> 都合の悪い日（NG）にする／戻す</label>
+        <label class="inline"><input type="radio" name="tap" value="pick"> 候補に入れる／外す</label>
+        <label class="inline"><input type="checkbox" id="range"> 範囲でまとめて（始まりと終わりを押す）</label>
+      </fieldset>
+      <p id="range-msg" class="small" aria-live="polite"></p>
+      <div id="calendar" class="calendar"></div>
+      <p class="legend-row">
+        <span class="lg-cell is-pick">7</span>候補
+        <span class="lg-cell is-ok">7</span>選べる日
+        <span class="lg-cell is-ng">7</span>NG
+        <span class="lg-cell is-off">7</span>対象外・祝日
+      </p>
+      <p id="pick-summary" class="small" aria-live="polite"></p>
+      <div class="btn-row">
+        <button type="button" class="btn btn-sub" id="reset-pick">自動で選び直す</button>
+        <button type="button" class="btn btn-sub" id="clear-ng">NG をすべて消す</button>
+      </div>
+    </section>
+
+    <!-- 3. 2 段階調整 -->
+    <section class="card" aria-labelledby="h-two">
+      <h2 id="h-two">2 段階で調整する（任意）</h2>
+      <label class="inline field"><input type="checkbox" id="two-stage"> 忙しい人（役員など）に先に聞き、残った日で次の人たちに聞く</label>
+      <div id="two-box" hidden>
+        <p class="small">1 段目の文面を送り、回答で残った日にチェックを付けると、その日だけで 2 段目の文面を作ります。</p>
+        <ul id="stage1-list" class="check-list"></ul>
+        <div class="field">
+          <label for="title2">2 段目の用件（空なら 1 段目と同じ）</label>
+          <input type="text" id="title2" maxlength="40">
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 文面 -->
+    <section class="card" aria-labelledby="h-out">
+      <h2 id="h-out">貼り付ける文面</h2>
+      <div class="tabs" role="tablist" aria-label="文面の形式" id="stage-tabs" hidden>
+        <button type="button" role="tab" id="tab-s1" aria-selected="true" aria-controls="out-panel">1 段目</button>
+        <button type="button" role="tab" id="tab-s2" aria-selected="false" aria-controls="out-panel" tabindex="-1">2 段目</button>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="kind">形式</label>
+          <select id="kind">
+            <option value="mail">メール・チャット</option>
+            <option value="forms">Forms の選択肢（1 行 1 候補）</option>
+            <option value="line">LINE（短い版）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="date-style">日付の書き方</label>
+          <select id="date-style">
+            <option value="slash">10/7（水）</option>
+            <option value="kanji">10月7日（水）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="deadline">回答の期限（任意）</label>
+          <input type="date" id="deadline">
+        </div>
+      </div>
+      <div id="out-panel">
+        <label for="output" class="visually-hidden">文面</label>
+        <textarea id="output" rows="12" readonly></textarea>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="copy">すべてコピー</button>
+        <button type="button" class="btn btn-sub" id="ics">カレンダーに仮押さえ（.ics）</button>
+        <button type="button" class="btn btn-sub" id="share">この条件を開くリンクをコピー</button>
+      </div>
+      <p id="copy-msg" class="small" aria-live="polite"></p>
+    </section>
+
+    <section class="card note">
+      <p>祝日は内閣府の「国民の祝日」の一覧をもとに外しています。会社や学校の休日、年末年始の休みは入っていないので、カレンダーで NG にしてください。</p>
+      <p><a href="./guide.html">使い方・候補日は何日がよいか・2 段階調整・断りやすい書き方・よくある質問</a></p>
+    </section>
 
   </main>
 
@@ -76,7 +193,7 @@
     <nav class="footer-nav" aria-label="フッターナビゲーション">
       <ul>
         <li><a href="../">yorozu-craft トップ</a></li>
-        <li><a href="./" aria-current="page">__TITLE__</a></li>
+        <li><a href="./" aria-current="page">日程調整 候補日ジェネレーター</a></li>
         <li><a href="./guide.html">使い方・よくある質問</a></li>
         <li><a href="../about.html">運営者情報</a></li>
         <li><a href="../privacy-policy.html">プライバシーポリシー</a></li>
