@@ -318,8 +318,8 @@
     var url = location.href.split('#')[0] + toShareHash(state);
     history.replaceState(null, '', url);
     var msg = 'リンクをコピーしました。条件はリンクの「#」以降に入っていて、サーバーには送信されません。';
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(function () { $('copy-msg').textContent = msg; }, function () { $('copy-msg').textContent = 'アドレスバーのリンクをコピーしてください。'; });
-    else $('copy-msg').textContent = 'アドレスバーのリンクをコピーしてください。';
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url).then(function () { $('file-msg').textContent = msg; }, function () { $('file-msg').textContent = 'アドレスバーのリンクをコピーしてください。'; });
+    else $('file-msg').textContent = 'アドレスバーのリンクをコピーしてください。';
   });
   on('ics', 'click', function () {
     var dates = outputDates(lastRes);
@@ -343,23 +343,60 @@
     a.download = Calc.backupFileName(TOOL);
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    $('copy-msg').textContent = 'ファイルに書き出しました。機種変更のときは、このファイルを新しい端末に移して「ファイルから読み込む」を押してください。';
+    $('file-msg').textContent = 'ファイルに書き出しました。機種変更のときは、このファイルを新しい端末に移して「ファイルから読み込む」を押してください。';
   });
   on('backup-import', 'click', function () { $('backup-file').click(); });
   on('backup-file', 'change', function () {
     var file = this.files && this.files[0];
     this.value = '';
     if (!file) return;
-    if (file.size > 1024 * 1024) { $('copy-msg').textContent = 'ファイルが大きすぎます。このツールで書き出したファイルを選んでください。'; return; }
+    if (file.size > 1024 * 1024) { $('file-msg').textContent = 'ファイルが大きすぎます。このツールで書き出したファイルを選んでください。'; return; }
     file.text().then(function (text) {
       var r = Calc.parseBackup(text, TOOL, ['draft']);
-      if (!r.ok) { $('copy-msg').textContent = r.error; return; }
+      if (!r.ok) { $('file-msg').textContent = r.error; return; }
       if (!window.confirm('ファイルの内容で、今の条件（NG の日・手で調整した日を含む）を置き換えます。よろしいですか？')) return;
       state = normalize(r.data.draft); fromShare = false;
       fillForm(); update();
-      $('copy-msg').textContent = 'ファイルから読み込みました。';
-    }, function () { $('copy-msg').textContent = 'ファイルを読み取れませんでした。'; });
+      $('file-msg').textContent = 'ファイルから読み込みました。';
+    }, function () { $('file-msg').textContent = 'ファイルを読み取れませんでした。'; });
   });
+
+  // --- 上端の固定バーと「くわしく入れる」の状態表示（screen.js。yorozu-plans の SCREEN.md 1.1） ---
+  // 読み込み時から結果が出ているので、利用者がスクロールか入力をするまではバーを出さない（CLS を出さない）
+  var bar = window.YorozuScreen.fixedBar({ bar: 'fixbar', watch: 'out-panel', jump: 'result-card', text: 'fixbar-text' });
+  var barArmed = false;
+  function armBar() {
+    if (barArmed) return;
+    barArmed = true;
+    window.removeEventListener('scroll', armBar);
+    document.removeEventListener('input', armBar);
+    document.removeEventListener('change', armBar);
+    updateBar();
+  }
+  window.addEventListener('scroll', armBar, { passive: true });
+  document.addEventListener('input', armBar);
+  document.addEventListener('change', armBar);
+  function updateBar() {
+    var n = lastRes ? outputDates(lastRes).length : 0;
+    bar.set(barArmed && n ? '候補 ' + n + ' 日' : '');
+  }
+  function optText(sel) { return sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : ''; }
+  function updateSummaries() {
+    var days = [1, 2, 3, 4, 5, 6, 0].filter(function (i) { return state.weekdays[i]; }).map(function (i) { return Calc.DOW[i]; }).join('');
+    var time = state.time.kind === 'custom'
+      ? (state.time.from || '') + '〜' + (state.time.to || '')
+      : optText($('time-kind'));
+    var fmt = [state.title.trim() || '用件なし', optText($('kind'))];
+    if (state.deadline) fmt.push('期限 ' + Calc.formatDate(state.deadline, state.dateStyle));
+    window.YorozuScreen.detailsSummary({
+      'opt-days': (days || 'なし') + '・' + (state.skipHolidays ? '祝日を外す' : '祝日を外さない'),
+      'opt-time': time,
+      'opt-cal': (state.ng.length ? 'NG ' + state.ng.length + ' 日' : 'NG なし') + (state.added.length || state.removed.length ? '・手で調整した日あり' : ''),
+      'opt-format': fmt.join('・'),
+      'opt-mode': state.mode === 'early' ? '早い順' : 'ばらけさせる',
+      'opt-two': state.twoStage ? 'する' : 'しない',
+    });
+  }
 
   // --- 全体の更新 ---
   var lastRes = null;
@@ -378,6 +415,8 @@
     $('pick-summary').textContent = '候補 ' + res.final.length + ' 日（選べる日 ' + res.days.length + ' 日のうち）' +
       (state.added.length || state.removed.length ? '。手で調整した日があります' : '');
     render(res);
+    updateBar();
+    updateSummaries();
   }
 
   // 共有リンクから開いたときは、保存中の下書きを上書きしない（操作したら下書きとして保存し直す）

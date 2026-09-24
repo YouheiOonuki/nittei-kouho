@@ -51,19 +51,21 @@
     <p class="subtitle">期間と曜日を選ぶだけで、祝日を外した日程調整の候補日と、フォーム・メール・LINEに貼る文面を作成。登録不要。</p>
   </header>
 
+  <!-- 上端の固定バー（yorozu-plans の SCREEN.md 1.1・D59）。結果が画面の外にあるときだけ screen.js が出す。読み込み時は hidden -->
+  <div class="fixbar" id="fixbar" role="status" hidden>
+    <a href="#result-card"><span id="fixbar-text"></span> ▸ 結果へ</a>
+  </div>
+
+  <!-- 画面の骨組み「入力 → 結果」（SCREEN.md 1.1）: 期間と候補の数 → 候補日と文面 → くわしく入れる → 保存・共有 -->
   <main class="app-main">
 
     <p class="shared-notice" id="shared-notice" role="status" hidden>共有された条件を表示しています。<button type="button" class="link-btn" id="shared-new">自分の条件で新しく作る</button></p>
 
     <p class="badge" id="asof">祝日は内閣府の一覧（<span id="hol-years"></span>）で外します・入力は外部に送信しません</p>
 
-    <!-- 1. 条件 -->
-    <section class="card" aria-labelledby="h-cond">
-      <h2 id="h-cond">条件</h2>
-      <div class="field">
-        <label for="title">用件（文面に入ります）</label>
-        <input type="text" id="title" maxlength="40" placeholder="例：懇親会、定例ミーティング">
-      </div>
+    <!-- 1. 必須の入力: 期間と候補の数。曜日・時間帯などは結果の後ろの「くわしく入れる」 -->
+    <fieldset class="card req">
+      <legend>条件</legend>
       <div class="grid2">
         <div class="field">
           <label for="start">期間の始まり</label>
@@ -74,12 +76,50 @@
           <input type="date" id="end">
         </div>
       </div>
-      <fieldset class="field">
-        <legend>使う曜日</legend>
-        <div class="dow-row" id="weekdays"></div>
-      </fieldset>
-      <label class="inline field"><input type="checkbox" id="skip-hol"> 祝日・振替休日を外す</label>
-      <div class="grid2">
+      <div class="field">
+        <label for="count">候補の数</label>
+        <p class="hint">5〜8 日くらいが答えやすい数です</p>
+        <input type="number" id="count" inputmode="numeric" min="1" max="31" step="1">
+      </div>
+    </fieldset>
+
+    <!-- 2. 結果: 候補日と貼り付ける文面 -->
+    <section class="card result-card" id="result-card" tabindex="-1" aria-labelledby="h-out">
+      <h2 id="h-out">貼り付ける文面</h2>
+      <div id="warnings" class="msg msg-warn" hidden></div>
+      <p id="pick-summary" class="pick-summary" aria-live="polite"></p>
+      <div class="tabs" role="tablist" aria-label="文面の形式" id="stage-tabs" hidden>
+        <button type="button" role="tab" id="tab-s1" aria-selected="true" aria-controls="out-panel">1 段目</button>
+        <button type="button" role="tab" id="tab-s2" aria-selected="false" aria-controls="out-panel" tabindex="-1">2 段目</button>
+      </div>
+      <div id="out-panel">
+        <label for="output" class="visually-hidden">文面</label>
+        <textarea id="output" rows="12" readonly></textarea>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn" id="copy">すべてコピー</button>
+        <button type="button" class="btn btn-sub" id="ics">カレンダーに仮押さえ（.ics）</button>
+      </div>
+      <p id="copy-msg" class="small" aria-live="polite"></p>
+      <div id="next-links" class="next-links" hidden>
+        <p>日程が決まったら → <a href="../tabi-shiori/">旅のしおりを作る</a></p>
+        <p>当日の精算は → <a href="../easy-split/">傾斜割り勘（幹事0円・2次会の合算）</a></p>
+      </div>
+    </section>
+
+    <!-- 3. くわしく入れる（SCREEN.md 1.1 の 4）。summary に今の状態を出す。開いた状態は保存しない -->
+    <div class="opts">
+      <details class="card opt" id="opt-days">
+        <summary>曜日・祝日: <span class="opt-state"></span></summary>
+        <fieldset class="field">
+          <legend>使う曜日</legend>
+          <div class="dow-row" id="weekdays"></div>
+        </fieldset>
+        <label class="inline field"><input type="checkbox" id="skip-hol"> 祝日・振替休日を外す</label>
+      </details>
+
+      <details class="card opt" id="opt-time">
+        <summary>時間帯: <span class="opt-state"></span></summary>
         <div class="field">
           <label for="time-kind">時間帯</label>
           <select id="time-kind">
@@ -92,93 +132,86 @@
             <input type="time" id="time-from" aria-label="開始時刻"> 〜 <input type="time" id="time-to" aria-label="終了時刻（任意）">
           </div>
         </div>
-        <div class="field">
-          <label for="count">候補の数</label>
-          <p class="hint">5〜8 日くらいが答えやすい数です</p>
-          <input type="number" id="count" inputmode="numeric" min="1" max="31" step="1">
-        </div>
-      </div>
-      <fieldset class="field">
-        <legend>選び方</legend>
-        <label class="inline"><input type="radio" name="mode" value="spread"> ばらけさせる（同じ週に固めない）</label>
-        <label class="inline"><input type="radio" name="mode" value="early"> 早い順</label>
-      </fieldset>
-    </section>
+      </details>
 
-    <!-- 2. カレンダー -->
-    <section class="card" aria-labelledby="h-cal">
-      <h2 id="h-cal">カレンダーで調整</h2>
-      <div id="warnings" class="msg msg-warn" hidden></div>
-      <fieldset class="field">
-        <legend>日付を押したときの動き</legend>
-        <label class="inline"><input type="radio" name="tap" value="ng" checked> 都合の悪い日（NG）にする／戻す</label>
-        <label class="inline"><input type="radio" name="tap" value="pick"> 候補に入れる／外す</label>
-        <label class="inline"><input type="checkbox" id="range"> 範囲でまとめて（始まりと終わりを押す）</label>
-      </fieldset>
-      <p id="range-msg" class="small" aria-live="polite"></p>
-      <div id="calendar" class="calendar"></div>
-      <p class="legend-row">
-        <span class="lg-cell is-pick">7</span>候補
-        <span class="lg-cell is-ok">7</span>選べる日
-        <span class="lg-cell is-ng">7</span>NG
-        <span class="lg-cell is-off">7</span>対象外・祝日
-      </p>
-      <p id="pick-summary" class="small" aria-live="polite"></p>
+      <details class="card opt" id="opt-cal">
+        <summary>カレンダーで調整: <span class="opt-state"></span></summary>
+        <fieldset class="field">
+          <legend>日付を押したときの動き</legend>
+          <label class="inline"><input type="radio" name="tap" value="ng" checked> 都合の悪い日（NG）にする／戻す</label>
+          <label class="inline"><input type="radio" name="tap" value="pick"> 候補に入れる／外す</label>
+          <label class="inline"><input type="checkbox" id="range"> 範囲でまとめて（始まりと終わりを押す）</label>
+        </fieldset>
+        <p id="range-msg" class="small" aria-live="polite"></p>
+        <div id="calendar" class="calendar"></div>
+        <p class="legend-row">
+          <span class="lg-cell is-pick">7</span>候補
+          <span class="lg-cell is-ok">7</span>選べる日
+          <span class="lg-cell is-ng">7</span>NG
+          <span class="lg-cell is-off">7</span>対象外・祝日
+        </p>
+        <div class="btn-row">
+          <button type="button" class="btn btn-sub" id="reset-pick">自動で選び直す</button>
+          <button type="button" class="btn btn-sub" id="clear-ng">NG をすべて消す</button>
+        </div>
+      </details>
+
+      <details class="card opt" id="opt-format">
+        <summary>用件・文面の形式: <span class="opt-state"></span></summary>
+        <div class="field">
+          <label for="title">用件（文面に入ります）</label>
+          <input type="text" id="title" maxlength="40" placeholder="例：懇親会、定例ミーティング">
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="kind">形式</label>
+            <select id="kind">
+              <option value="mail">メール・チャット</option>
+              <option value="forms">Forms の選択肢（1 行 1 候補）</option>
+              <option value="line">LINE（短い版）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="date-style">日付の書き方</label>
+            <select id="date-style">
+              <option value="slash">10/7（水）</option>
+              <option value="kanji">10月7日（水）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="deadline">回答の期限（任意）</label>
+            <input type="date" id="deadline">
+          </div>
+        </div>
+      </details>
+
+      <details class="card opt" id="opt-mode">
+        <summary>選び方: <span class="opt-state"></span></summary>
+        <fieldset class="field">
+          <legend>選び方</legend>
+          <label class="inline"><input type="radio" name="mode" value="spread"> ばらけさせる（同じ週に固めない）</label>
+          <label class="inline"><input type="radio" name="mode" value="early"> 早い順</label>
+        </fieldset>
+      </details>
+
+      <details class="card opt" id="opt-two">
+        <summary>2 段階で調整する: <span class="opt-state"></span></summary>
+        <label class="inline field"><input type="checkbox" id="two-stage"> 忙しい人（役員など）に先に聞き、残った日で次の人たちに聞く</label>
+        <div id="two-box" hidden>
+          <p class="small">1 段目の文面を送り、回答で残った日にチェックを付けると、その日だけで 2 段目の文面を作ります。</p>
+          <ul id="stage1-list" class="check-list"></ul>
+          <div class="field">
+            <label for="title2">2 段目の用件（空なら 1 段目と同じ）</label>
+            <input type="text" id="title2" maxlength="40">
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- 4. 保存・共有 -->
+    <details class="card opt" id="file-box">
+      <summary>条件の共有・ファイルへの書き出し</summary>
       <div class="btn-row">
-        <button type="button" class="btn btn-sub" id="reset-pick">自動で選び直す</button>
-        <button type="button" class="btn btn-sub" id="clear-ng">NG をすべて消す</button>
-      </div>
-    </section>
-
-    <!-- 3. 2 段階調整 -->
-    <section class="card" aria-labelledby="h-two">
-      <h2 id="h-two">2 段階で調整する（任意）</h2>
-      <label class="inline field"><input type="checkbox" id="two-stage"> 忙しい人（役員など）に先に聞き、残った日で次の人たちに聞く</label>
-      <div id="two-box" hidden>
-        <p class="small">1 段目の文面を送り、回答で残った日にチェックを付けると、その日だけで 2 段目の文面を作ります。</p>
-        <ul id="stage1-list" class="check-list"></ul>
-        <div class="field">
-          <label for="title2">2 段目の用件（空なら 1 段目と同じ）</label>
-          <input type="text" id="title2" maxlength="40">
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. 文面 -->
-    <section class="card" aria-labelledby="h-out">
-      <h2 id="h-out">貼り付ける文面</h2>
-      <div class="tabs" role="tablist" aria-label="文面の形式" id="stage-tabs" hidden>
-        <button type="button" role="tab" id="tab-s1" aria-selected="true" aria-controls="out-panel">1 段目</button>
-        <button type="button" role="tab" id="tab-s2" aria-selected="false" aria-controls="out-panel" tabindex="-1">2 段目</button>
-      </div>
-      <div class="grid2">
-        <div class="field">
-          <label for="kind">形式</label>
-          <select id="kind">
-            <option value="mail">メール・チャット</option>
-            <option value="forms">Forms の選択肢（1 行 1 候補）</option>
-            <option value="line">LINE（短い版）</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="date-style">日付の書き方</label>
-          <select id="date-style">
-            <option value="slash">10/7（水）</option>
-            <option value="kanji">10月7日（水）</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="deadline">回答の期限（任意）</label>
-          <input type="date" id="deadline">
-        </div>
-      </div>
-      <div id="out-panel">
-        <label for="output" class="visually-hidden">文面</label>
-        <textarea id="output" rows="12" readonly></textarea>
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn" id="copy">すべてコピー</button>
-        <button type="button" class="btn btn-sub" id="ics">カレンダーに仮押さえ（.ics）</button>
         <button type="button" class="btn btn-sub" id="share">この条件を開くリンクをコピー</button>
       </div>
       <div class="btn-row">
@@ -186,12 +219,8 @@
         <button type="button" class="btn btn-sub" id="backup-import">ファイルから読み込む</button>
         <input type="file" id="backup-file" accept=".json,application/json" hidden>
       </div>
-      <p id="copy-msg" class="small" aria-live="polite"></p>
-      <div id="next-links" class="next-links" hidden>
-        <p>日程が決まったら → <a href="../tabi-shiori/">旅のしおりを作る</a></p>
-        <p>当日の精算は → <a href="../easy-split/">傾斜割り勘（幹事0円・2次会の合算）</a></p>
-      </div>
-    </section>
+      <p id="file-msg" class="small" aria-live="polite"></p>
+    </details>
 
     <section class="card note">
       <p>会社や学校の休日、年末年始の休みは入っていないので、カレンダーで NG にしてください。</p>
@@ -214,6 +243,7 @@
   </footer>
 
   <script src="./constants.js"></script>
+  <script src="./screen.js"></script>
   <script src="./calc.js"></script>
   <script src="./main.js"></script>
   <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
