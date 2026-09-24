@@ -332,6 +332,34 @@
     $('copy-msg').textContent = '.ics を保存しました。カレンダーのアプリで開くと、候補日が仮の予定として入ります。';
   });
 
+  // --- ファイルへの書き出し・読み込み（README「ツールを追加するとき」20。決定 D31） ---
+  // 中身はこの端末の中で作り、どこにも送信しない。機種変更のときはファイルを移して読み込む
+  var TOOL = 'nittei-kouho';
+  on('backup-export', 'click', function () {
+    var blob = new Blob([JSON.stringify(Calc.buildBackup(TOOL, { draft: state }), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = Calc.backupFileName(TOOL);
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    $('copy-msg').textContent = 'ファイルに書き出しました。機種変更のときは、このファイルを新しい端末に移して「ファイルから読み込む」を押してください。';
+  });
+  on('backup-import', 'click', function () { $('backup-file').click(); });
+  on('backup-file', 'change', function () {
+    var file = this.files && this.files[0];
+    this.value = '';
+    if (!file) return;
+    if (file.size > 1024 * 1024) { $('copy-msg').textContent = 'ファイルが大きすぎます。このツールで書き出したファイルを選んでください。'; return; }
+    file.text().then(function (text) {
+      var r = Calc.parseBackup(text, TOOL, ['draft']);
+      if (!r.ok) { $('copy-msg').textContent = r.error; return; }
+      if (!window.confirm('ファイルの内容で、今の条件（NG の日・手で調整した日を含む）を置き換えます。よろしいですか？')) return;
+      state = normalize(r.data.draft); fromShare = false;
+      fillForm(); update();
+      $('copy-msg').textContent = 'ファイルから読み込みました。';
+    }, function () { $('copy-msg').textContent = 'ファイルを読み取れませんでした。'; });
+  });
+
   // --- 全体の更新 ---
   var lastRes = null;
   function render(res) {
