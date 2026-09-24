@@ -384,6 +384,18 @@
     document.addEventListener(ev, function () { fromShare = false; }, { once: true, capture: true });
   });
 
+  // 共有リンクで来た人に、自分の日程を一から作る入口を出す
+  if (fromShare) $('shared-notice').hidden = false;
+  on('shared-new', 'click', function () {
+    history.replaceState(null, '', location.pathname + location.search);
+    fromShare = false;
+    state = normalize(null);
+    $('shared-notice').hidden = true;
+    fillForm();
+    update();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   $('hol-years').textContent = K.HOLIDAY_YEARS.from + '〜' + K.HOLIDAY_YEARS.to + ' 年';
   fillForm();
   update();

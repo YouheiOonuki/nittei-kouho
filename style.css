@@ -197,3 +197,24 @@ label.inline input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent);
 @media (max-width: 480px) {
   .app-header h1 { font-size: 1.2rem; }
 }
+
+/* 共有リンクで開いたときの案内 */
+.shared-notice {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  font-size: 0.9rem;
+}
+.link-btn {
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
