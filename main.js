@@ -300,6 +300,7 @@
     $('output').rows = Math.min(20, Math.max(6, text.split('\n').length + 1));
     $('copy').disabled = !dates.length;
     $('ics').disabled = !dates.length;
+    $('next-links').hidden = !dates.length;
   }
 
   function copyText(text, okMsg) {
