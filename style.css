@@ -227,3 +227,58 @@ label.inline input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent);
 .content details { margin: 0.4rem 0; }
 .content summary { cursor: pointer; color: var(--accent); font-size: 0.88rem; }
 .content details[open] summary { margin-bottom: 0.3rem; }
+
+/* ===========================
+   画面の骨組み（yorozu-plans の docs/SCREEN.md 1.1。yorozu-template の style.css の部品）
+   期間と候補の数（fieldset.req）→ 候補日と文面（.result-card）→ くわしく入れる（details.opt）、上端の固定バー、印刷で広告を消す
+   =========================== */
+fieldset.card { min-width: 0; }
+.req legend {
+  float: left; width: 100%;   /* legend を枠の上に載せず、h2 と同じ見た目で枠の中に置く */
+  font-size: 1.02rem; font-weight: 700; color: var(--accent);
+  border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; margin-bottom: 0.9rem;
+}
+.req legend + * { clear: both; }
+.req .field:last-child { margin-bottom: 0; }
+
+.result-card { scroll-margin-top: 56px; }   /* 固定バー（44px）で見出しが隠れないように */
+.result-card:focus { outline: none; }
+.pick-summary { font-weight: 700; margin-bottom: 0.5rem; }
+.pick-summary:empty::before { content: '\00a0'; }   /* 読み込み時のずれ（CLS）を抑える: main.js が書く前から 1 行分 */
+
+/* くわしく入れる（1 グループ 1 つの details）。summary の .opt-state に今の状態を出す（screen.js の detailsSummary） */
+details.card.opt { padding: 0 1.2rem; margin-bottom: 0.6rem; }
+details.card.opt > summary {
+  cursor: pointer; display: block; min-height: 44px; padding: 0.6rem 0;
+  color: var(--accent); font-weight: 600; font-size: 0.95rem; list-style: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+details.card.opt > summary::-webkit-details-marker { display: none; }
+details.card.opt > summary::before { content: '▸'; margin-right: 0.4rem; }
+details.card.opt[open] > summary::before { content: '▾'; }
+details.card.opt[open] { padding-bottom: 0.9rem; }
+details.card.opt[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 0.9rem; }
+details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.opt-state { color: var(--text); font-weight: normal; }
+
+/* 固定バー（SCREEN.md 0 章の 3・D59）: 上端に 1 行、高さ 44px。下端は AdSense のアンカー広告が使う。
+   読み込み時は hidden（screen.js が出し入れする。fixed なのでレイアウトはずれない） */
+.fixbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50; height: 44px;
+  background: var(--card); border-bottom: 2px solid var(--accent); box-shadow: 0 2px 8px var(--shadow);
+}
+.fixbar a {
+  display: block; max-width: 820px; margin: 0 auto; padding: 0 1rem; height: 42px; line-height: 42px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700;
+  color: var(--accent); text-decoration: none;
+}
+.fixbar a:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+@media print {
+  .fixbar { display: none !important; }
+  /* 印刷では折りたたみの中も出す */
+  main details::details-content { content-visibility: visible; display: block; }
+  main details > summary::before { content: none; }
+  /* 広告は印刷に出さない（gakushu-print と同じ） */
+  ins.adsbygoogle, .google-auto-placed, iframe[id^="aswift"], iframe[id^="google_ads"] { display: none !important; }
+}
