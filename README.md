@@ -50,6 +50,7 @@ yorozu-craft のツールの1つです（共通ルールは [youheioonuki.github
 | `favicon.svg` / `apple-touch-icon.png` / `og-image.png` | アイコン / ホーム画面用アイコン / SNS 共有用画像（1200×630） |
 | `sitemap.xml` | サイトマップ（robots.txt はドメイン直下で管理） |
 | `tests/calc.test.js` | 計算のテスト（`node --test tests/*.test.js`。`.github/workflows/test.yml` で push・PR のたびに自動実行） |
+| `tests/backup.test.js` | 保存内容のファイルへの書き出し・読み込み（`calc.js` の `buildBackup` / `parseBackup`）のテスト |
 
 ## ライセンス
 
