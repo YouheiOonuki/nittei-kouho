@@ -218,3 +218,7 @@ label.inline input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent);
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* 結果のあとの「次にすること」の導線（文面が出ているときだけ） */
+.next-links { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 1px dashed var(--border); }
+.next-links p { font-size: 0.85rem; color: var(--muted); margin: 0.2rem 0; }
