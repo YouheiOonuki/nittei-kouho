@@ -217,6 +217,7 @@
       <div class="btn-row">
         <button type="button" class="btn btn-sub" id="backup-export">ファイルに書き出す</button>
         <button type="button" class="btn btn-sub" id="backup-import">ファイルから読み込む</button>
+        <button type="button" class="btn btn-sub" data-reset-storage="nittei-kouho_">保存した内容をすべて消す（初期状態に戻す）</button>
         <input type="file" id="backup-file" accept=".json,application/json" hidden>
       </div>
       <p id="file-msg" class="small" aria-live="polite"></p>
@@ -245,6 +246,7 @@
   <script src="./constants.js"></script>
   <script src="./screen.js"></script>
   <script src="./calc.js"></script>
+  <script src="./reset-storage.js"></script>
   <script src="./main.js"></script>
   <!-- Cloudflare Web Analytics（Cookie を使わないアクセス解析） --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b79bf821e1fd4b6683866d493b1de426"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
