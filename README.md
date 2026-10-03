@@ -46,7 +46,7 @@ yorozu-craft のツールの1つです（共通ルールは [youheioonuki.github
 | `constants.js` | 祝日データ（出典・確認日・対応年） |
 | `main.js` | 画面の制御・カレンダー・保存・共有リンク・コピー |
 | `screen.js` | 画面の部品（上端の固定バー・折りたたみの状態表示。yorozu-template と同じ） |
-| `style.css` | 見た目（和紙風の配色、ダークモード対応） |
+| `style.css` | 見た目（和紙風の配色、ダークモード対応）。先頭の `yorozu-common:begin`〜`end` はサイト共通の部品とトークン（手で直さない。正本は youheioonuki.github.io の `tools/common/yorozu-common.css`、`tools/sync-common.mjs` で配る） |
 | `404.html` | ツール配下の存在しない URL で出るページ（サイト共通のもの） |
 | `favicon.svg` / `apple-touch-icon.png` / `og-image.png` | アイコン / ホーム画面用アイコン / SNS 共有用画像（1200×630） |
 | `sitemap.xml` | サイトマップ（robots.txt はドメイン直下で管理） |
