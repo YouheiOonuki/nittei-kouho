@@ -58,9 +58,10 @@
   <!-- 画面の骨組み「入力 → 結果」（SCREEN.md 1.1）: 期間と候補の数 → 候補日と文面 → くわしく入れる → 保存・共有 -->
   <main class="app-main">
 
-    <p class="shared-notice" id="shared-notice" role="status" hidden>共有された条件を表示しています。<button type="button" class="link-btn" id="shared-new">自分の条件で新しく作る</button></p>
+    <div class="shared-notice" id="shared-notice" role="status" hidden><strong>共有された条件</strong> <button type="button" class="link-btn" id="shared-new">自分の条件で新しく作る</button></div>
 
-    <p class="badge" id="asof">祝日は内閣府の一覧（<span id="hol-years"></span>）で外します・入力は外部に送信しません</p>
+    <!-- data-keep: 祝日の出どころ（内閣府の一覧と年の範囲）と入力の扱い。値の出典を画面に置く決まり（D117 と同じ役目） -->
+    <p class="badge" id="asof" data-keep>祝日は内閣府の一覧（<span id="hol-years"></span>）で外します・入力は外部に送信しません</p>
 
     <!-- 1. 必須の入力: 期間と候補の数。曜日・時間帯などは結果の後ろの「くわしく入れる」 -->
     <fieldset class="card req">
@@ -76,8 +77,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="count">候補の数</label>
-        <p class="hint">5〜8 日くらいが答えやすい数です</p>
+        <label for="count">候補の数（5〜8 日が答えやすい）</label>
         <input type="number" id="count" inputmode="numeric" min="1" max="31" step="1">
       </div>
     </fieldset>
@@ -101,8 +101,8 @@
       </div>
       <p id="copy-msg" class="small" aria-live="polite"></p>
       <div id="next-links" class="next-links" hidden>
-        <p>日程が決まったら → <a href="../tabi-shiori/">旅のしおりを作る</a></p>
-        <p>当日の精算は → <a href="../easy-split/">傾斜割り勘（幹事0円・2次会の合算）</a></p>
+        <p><a href="../tabi-shiori/">日程が決まったら旅のしおりを作る</a></p>
+        <p><a href="../easy-split/">当日の精算は傾斜割り勘で（幹事0円・2次会の合算）</a></p>
       </div>
     </section>
 
@@ -242,7 +242,6 @@
     <!-- /about-tool -->
 
     <section class="card note">
-      <p>会社や学校の休日、年末年始の休みは入っていないので、カレンダーで NG にしてください。</p>
       <p><a href="./guide.html">使い方・候補日は何日がよいか・2 段階調整・よくある質問</a></p>
     </section>
 
