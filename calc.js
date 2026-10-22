@@ -174,8 +174,9 @@
 
   // --- .ics（候補日をカレンダーに仮押さえする用） ---
 
-  function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/[,;]/g, function (c) { return '\\' + c; }).replace(/\n/g, '\\n'); }
-  function stamp(d, hhmm) { return d.replace(/-/g, '') + 'T' + hhmm.replace(':', '') + '00'; }
+  function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/[,;]/g, function (c) { return '\\' + c; }).replace(/\r\n|\r|\n/g, '\\n').replace(/[\x00-\x08\x0b-\x1f\x7f]/g, ''); }
+  // HH:MM でない時刻は使わない（K191 段 3 F3。共有リンクからの改行の差し込みを出口でも止める）
+  function stamp(d, hhmm) { if (!/^\d{2}:\d{2}$/.test(String(hhmm))) hhmm = '00:00'; return d.replace(/-/g, '') + 'T' + hhmm.replace(':', '') + '00'; }
 
   /**
    * 時間帯があれば日本時間の予定（終わりの指定が無ければ 2 時間）、無ければ終日の予定

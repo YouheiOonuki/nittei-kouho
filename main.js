@@ -64,6 +64,9 @@
     if (!Calc.isDate(d.end)) d.end = Calc.addDays(d.start, 27);
     if (d.deadline && !Calc.isDate(d.deadline)) d.deadline = '';
     if (!d.time || typeof d.time !== 'object') d.time = defaults().time;
+    // 時間帯は決まった種類と HH:MM だけ（共有リンクから改行などが .ics に入らないように。K191 段 3 F3）
+    if (['none', 'lunch', 'night', 'custom'].indexOf(d.time.kind) < 0) d.time = defaults().time;
+    ['from', 'to'].forEach(function (k) { if (!/^\d{2}:\d{2}$/.test(String(d.time[k] || ''))) d.time[k] = ''; });
     d.count = Math.max(1, Math.min(31, parseInt(d.count, 10) || 6));
     d.stage = d.stage === 2 ? 2 : 1;
     return d;
