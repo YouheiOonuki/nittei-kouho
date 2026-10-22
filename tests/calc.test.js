@@ -120,6 +120,13 @@ test('.ics: 時間帯あり（日本時間・2 時間）と終日、CRLF、特�
   assert.match(c, /DTEND;TZID=Asia\/Tokyo:20261008T010000/);
 });
 
+test('.ics: 共有リンクの値から行を差し込めない（K191 段 3 F3）', () => {
+  const now = new Date(Date.UTC(2026, 8, 23, 12, 0, 0));
+  const evil = C.toICS(['2026-10-07'], { title: 'a\r\nATTENDEE:x\rb', time: { kind: 'custom', from: '19:00\r\nX-EVIL:1', to: '21:00' } }, now);
+  assert.doesNotMatch(evil, /\r\n(ATTENDEE|X-EVIL)/);
+  assert.match(evil, /SUMMARY:【仮】a\\nATTENDEE:x\\nb/);
+});
+
 test('constants: 祝日データの形・対応年・出典と確認日', () => {
   assert.match(K.CHECKED, /^\d{4}-\d{2}-\d{2}$/);
   assert.match(K.SOURCE.url, /^https:\/\//);
