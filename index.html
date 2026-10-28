@@ -18,8 +18,8 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#8b4513" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1c1814" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#eef0f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#15191d" media="(prefers-color-scheme: dark)">
 
   <script type="application/ld+json">
   {
@@ -58,7 +58,7 @@
   <!-- 画面の骨組み「入力 → 結果」（SCREEN.md 1.1）: 期間と候補の数 → 候補日と文面 → くわしく入れる → 保存・共有 -->
   <main class="app-main">
 
-    <div class="shared-notice" id="shared-notice" role="status" hidden><strong>共有された条件</strong> <button type="button" class="link-btn" id="shared-new">自分の条件で新しく作る</button></div>
+    <div class="notice shared-notice" id="shared-notice" role="status" hidden><strong>共有された条件</strong> <button type="button" class="link-btn" id="shared-new">自分の条件で新しく作る</button></div>
 
     <!-- data-keep: 祝日の出どころ（内閣府の一覧と年の範囲）と入力の扱い。値の出典を画面に置く決まり（D117 と同じ役目） -->
     <p class="badge" id="asof" data-keep>祝日は内閣府の一覧（<span id="hol-years"></span>）で外します・入力は外部に送信しません</p>
@@ -83,9 +83,9 @@
     </fieldset>
 
     <!-- 2. 結果: 候補日と貼り付ける文面 -->
-    <section class="card result-card" id="result-card" tabindex="-1" aria-labelledby="h-out">
+    <section class="card" id="result-card" tabindex="-1" aria-labelledby="h-out">
       <h2 id="h-out">貼り付ける文面</h2>
-      <div id="warnings" class="msg msg-warn" hidden></div>
+      <div id="warnings" class="notice" hidden></div>
       <p id="pick-summary" class="pick-summary" aria-live="polite"></p>
       <div class="tabs" role="tablist" aria-label="文面の形式" id="stage-tabs" hidden>
         <button type="button" role="tab" id="tab-s1" aria-selected="true" aria-controls="out-panel">1 段目</button>
@@ -96,8 +96,8 @@
         <textarea id="output" rows="12" readonly></textarea>
       </div>
       <div class="btn-row">
-        <button type="button" class="btn" id="copy">すべてコピー</button>
-        <button type="button" class="btn btn-sub" id="ics">カレンダーに仮押さえ（.ics）</button>
+        <button type="button" class="btn btn-primary" id="copy">すべてコピー</button>
+        <button type="button" class="btn" id="ics">カレンダーに仮押さえ（.ics）</button>
       </div>
       <p id="copy-msg" class="small" aria-live="polite"></p>
       <div id="next-links" class="next-links" hidden>
@@ -150,8 +150,8 @@
           <span class="lg-cell is-off">7</span>対象外・祝日
         </p>
         <div class="btn-row">
-          <button type="button" class="btn btn-sub" id="reset-pick">自動で選び直す</button>
-          <button type="button" class="btn btn-sub" id="clear-ng">NG をすべて消す</button>
+          <button type="button" class="btn" id="reset-pick">自動で選び直す</button>
+          <button type="button" class="btn" id="clear-ng">NG をすべて消す</button>
         </div>
       </details>
 
@@ -211,12 +211,12 @@
     <details class="card opt" id="file-box">
       <summary>条件の共有・ファイルへの書き出し</summary>
       <div class="btn-row">
-        <button type="button" class="btn btn-sub" id="share">この条件を開くリンクをコピー</button>
+        <button type="button" class="btn" id="share">この条件を開くリンクをコピー</button>
       </div>
       <div class="btn-row">
-        <button type="button" class="btn btn-sub" id="backup-export">ファイルに書き出す</button>
-        <button type="button" class="btn btn-sub" id="backup-import">ファイルから読み込む</button>
-        <button type="button" class="btn btn-sub" data-reset-storage="nittei-kouho_">保存した内容をすべて消す（初期状態に戻す）</button>
+        <button type="button" class="btn" id="backup-export">ファイルに書き出す</button>
+        <button type="button" class="btn" id="backup-import">ファイルから読み込む</button>
+        <button type="button" class="btn" data-reset-storage="nittei-kouho_">保存した内容をすべて消す（初期状態に戻す）</button>
         <input type="file" id="backup-file" accept=".json,application/json" hidden>
       </div>
       <p id="file-msg" class="small" aria-live="polite"></p>
@@ -241,7 +241,7 @@
     </details>
     <!-- /about-tool -->
 
-    <section class="card note">
+    <section class="card">
       <p><a href="./guide.html">使い方・候補日は何日がよいか・2 段階調整・よくある質問</a></p>
     </section>
 
