@@ -420,6 +420,7 @@
     render(res);
     updateBar();
     updateSummaries();
+    window.yzUsed?.();
   }
 
   // 共有リンクから開いたときは、保存中の下書きを上書きしない（操作したら下書きとして保存し直す）
